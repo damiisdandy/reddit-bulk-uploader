@@ -31,6 +31,8 @@ export default function Uploader() {
           setUploadedFileName(null);
           return;
         }
+        // parse all entities and added them to global state (memory)
+        entityMapper.parseData();
       }
     } catch {
       toast.error("Problem parsing CSV");

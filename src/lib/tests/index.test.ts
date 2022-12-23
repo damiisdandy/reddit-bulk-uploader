@@ -1,4 +1,5 @@
 import { EntityMapper } from "..";
+import { store } from "../../store";
 import { CSV_FILE_WITH_MISSING_COLUMNS, SIMPLE_CSV_FILE_WITH_ONE_ROW } from "../constants"
 
 describe('Test methods of `EntityMapper` class, this class takes in CSV files, parses and formats it into JSON', () => {
@@ -26,4 +27,44 @@ describe('Test methods of `EntityMapper` class, this class takes in CSV files, p
       message: 'fields: (Ad Ad Group ID, and Post ID) are missing'
     });
   })
+
+  test('Format CSV file into Array of Entities to be stored in the global state (Memory)', async () => {
+    const oneRowFile = new File([SIMPLE_CSV_FILE_WITH_ONE_ROW], 'one-row.csv', { type: 'text/csv' });
+    const entityMapper = new EntityMapper(oneRowFile);
+    await entityMapper.readCSVFiles();
+
+    // stores all entities in global state
+    entityMapper.parseData();
+    const storeEntities = store.getState().entities;
+    expect(storeEntities).toStrictEqual([
+      {
+        type: 'campaign',
+        id: 1,
+        title: 'Test Campaign1',
+        objective: 'CLICKS',
+        row: 0,
+        result: 'Success'
+      },
+      {
+        type: 'ad_group',
+        id: 2,
+        campaign_id: 1,
+        title: 'Ad group 1',
+        geolocations: ['US', 'CA'],
+        start_date: '01/01/2020',
+        end_date: '01/10/2020',
+        result: 'Success',
+        row: 0
+      },
+      {
+        id: 3,
+        ad_group_id: 2,
+        type: 'ad',
+        row: 0,
+        title: 'Ad 1',
+        post_id: 't2_1',
+        result: 'Success'
+      }
+    ])
+  });
 })
