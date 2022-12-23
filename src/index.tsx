@@ -1,20 +1,25 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { Toaster } from "react-hot-toast";
+import { Provider } from "react-redux";
+
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import Layout from "./components/Layout/Layout";
+import { store } from "./store";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <Layout>
-      <Toaster />
-      <App />
-    </Layout>
+    <Provider store={store}>
+      <Layout>
+        <Toaster />
+        <App />
+      </Layout>
+    </Provider>
   </React.StrictMode>
 );
 
