@@ -1,5 +1,6 @@
 import { ChangeEventHandler, useState } from "react";
 import { toast } from "react-hot-toast";
+import Papaparse from "papaparse";
 import { AiOutlineFileAdd } from "react-icons/ai";
 import { BiLoaderAlt } from "react-icons/bi";
 import { EntityMapper } from "../../../lib";
@@ -7,6 +8,7 @@ import { EntityMapper } from "../../../lib";
 export default function Uploader() {
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [parseLoading, setParseLoading] = useState(false);
+  const [csvDownloadLink, setCsvDownloadLink] = useState("");
 
   const onFileUpload: ChangeEventHandler<HTMLInputElement> = async (e) => {
     try {
@@ -35,12 +37,23 @@ export default function Uploader() {
         entityMapper.parseData();
         // convert global state back into CSV
         const result = entityMapper.generateResult();
+        // create downloadable link for results.csv
+        downloadCSV(result);
       }
     } catch {
       toast.error("Problem parsing CSV");
     } finally {
       setParseLoading(false);
     }
+  };
+
+  /**
+   * Create downloadable link for new csv file
+   */
+  const downloadCSV = (array: any[]) => {
+    const csv = Papaparse.unparse(array);
+    const blobData = new Blob([csv], { type: "text/csv" });
+    setCsvDownloadLink(URL.createObjectURL(blobData));
   };
 
   return (
@@ -72,6 +85,15 @@ export default function Uploader() {
               accept=".csv"
             />
           </>
+        )}
+        {csvDownloadLink && (
+          <a
+            href={csvDownloadLink}
+            className="text-sm text-brand-100 underline text-center"
+            download="results.csv"
+          >
+            download results
+          </a>
         )}
       </label>
     </div>
