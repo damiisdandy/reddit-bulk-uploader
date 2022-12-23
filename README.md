@@ -4,10 +4,13 @@
 
 ```
 # pull repository
-git pull [repo-url]
+git clone [repo-url]
 
 # navigate into repository
 cd [repo-folder-location]
+
+# switch to branch
+git switch damilola
 
 # install all dependencies
 yarn
