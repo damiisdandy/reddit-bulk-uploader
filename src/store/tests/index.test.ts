@@ -1,5 +1,5 @@
 import { store } from ".."
-import { clearState, upsertEntity } from "../reducers/entity"
+import { clearState, printEntity, upsertEntity } from "../reducers/entity"
 
 beforeEach(() => {
   // clear state before each test
@@ -70,5 +70,21 @@ describe('Test store reducers, both upsert and clear', () => {
 
     // since we added an entity we should have 3 items in store
     expect(store.getState().entities.length).toBe(3);
+  })
+
+  test('print entity by ID or print all', () => {
+    const storeEntities = store.getState().entities;
+    // print all entities
+    expect(printEntity(storeEntities, '', 'all').length).toBe(storeEntities.length)
+
+    // print all of type campaign
+    expect(printEntity(storeEntities, '', 'campaign').length).toBe(storeEntities.length)
+
+    // find by id and campaign
+    expect(printEntity(storeEntities, '1', 'campaign')[0].title).toBe("Test Campaign1")
+
+    // find by id and ad (ad does not exist)
+    expect(printEntity(storeEntities, '103', 'ad').length).toBe(0)
+
   })
 })

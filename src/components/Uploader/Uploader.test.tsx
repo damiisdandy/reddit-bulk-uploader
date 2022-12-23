@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { SIMPLE_CSV_FILE_WITH_ONE_ROW } from "../../../lib/constants";
+import { SIMPLE_CSV_FILE_WITH_ONE_ROW } from "../../lib/constants";
 import Uploader from "./Uploader";
 
 describe("Ensure component can upload file", () => {

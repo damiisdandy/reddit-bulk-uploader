@@ -3,7 +3,7 @@ import { toast } from "react-hot-toast";
 import Papaparse from "papaparse";
 import { AiOutlineFileAdd } from "react-icons/ai";
 import { BiLoaderAlt } from "react-icons/bi";
-import { EntityMapper } from "../../../lib";
+import { EntityMapper } from "../../lib";
 
 export default function Uploader() {
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);

@@ -72,4 +72,19 @@ export const entitySlice = createSlice({
 })
 
 export const { clearState, upsertEntity } = entitySlice.actions;
+export const printEntity = (entities: Partial<Entity>[], id: string, type: 'campaign' | 'ad_group' | 'ad' | 'all'): Partial<Entity>[] => {
+  if (id) {
+    return entities.filter(
+      (entity) =>
+        entity.id?.toString() === id &&
+        (type === "all" ? true : entity.type === type)
+    )
+  } else {
+    if (type === "all") {
+      return entities;
+    } else {
+      return entities.filter((entity) => entity.type === type)
+    }
+  }
+}
 export default entitySlice.reducer;
