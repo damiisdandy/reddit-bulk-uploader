@@ -21,7 +21,7 @@ export default function Uploader() {
         const entityMapper = new EntityMapper(csvFile);
         setParseLoading(true);
         // read CSV file
-        await entityMapper.readCSVFiles();
+        await entityMapper.readCSVFile();
         // validate CSV files
         const validationResult = entityMapper.validateColumnFields();
         if (!validationResult.status) {
@@ -33,6 +33,8 @@ export default function Uploader() {
         }
         // parse all entities and added them to global state (memory)
         entityMapper.parseData();
+        // convert global state back into CSV
+        const result = entityMapper.generateResult();
       }
     } catch {
       toast.error("Problem parsing CSV");

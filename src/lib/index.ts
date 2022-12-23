@@ -1,7 +1,8 @@
 import dayjs from 'dayjs';
 import PapaParse from 'papaparse';
+import _ from 'lodash';
 import { store } from '../store';
-import { AdGroup, Ads, Campaign, CampaignObjective, upsertEntity } from '../store/reducers/entity';
+import { AdGroup, Ads, Campaign, CampaignObjective, Entity, upsertEntity } from '../store/reducers/entity';
 import { EXPECTED_CAMPAIGN_BEHAVIOURS, EXPECTED_FIELDS } from './constants';
 import { arrayToSentece, findEntityById, getNumberOrDefaultString, readFileAsync } from './utils';
 
@@ -38,7 +39,7 @@ export class EntityMapper {
   /**
    * Read CSV file and convert into JSON
   */
-  public async readCSVFiles(): Promise<CSVRow[]> {
+  public async readCSVFile(): Promise<CSVRow[]> {
     const csvText = await readFileAsync(this.file);
     const csv = PapaParse.parse(csvText, {
       header: true,
@@ -109,7 +110,7 @@ export class EntityMapper {
   /**
   * Parse Ad Groups entity
   */
-  private parseAdGroups(data: CSVRow, row_id: number): AdGroup {
+  private parseAdGroups(data: CSVRow, row: number): AdGroup {
     const currentStoreState = store.getState();
     const errorArray = [];
     const providedId = data["Ad Group ID"];
@@ -126,7 +127,7 @@ export class EntityMapper {
     if (campaignIdErrorMessage) {
       errorArray.push(campaignIdErrorMessage);
     } else {
-      let campaignEntityOnRow = currentStoreState.entities.find(entity => entity.row === row_id && entity.type === 'campaign');
+      let campaignEntityOnRow = currentStoreState.entities.find(entity => entity.row === row && entity.type === 'campaign');
       if (campaignEntityOnRow) {
         campaignRowId = campaignEntityOnRow.id;
       } else {
@@ -153,7 +154,7 @@ export class EntityMapper {
       start_date: data["Start Date"],
       end_date: data["End Date"],
       result: errorArray.length ? arrayToSentece(errorArray) : 'Success',
-      row: row_id,
+      row,
     }
 
     store.dispatch(upsertEntity(adGroup));
@@ -163,7 +164,7 @@ export class EntityMapper {
   /**
   * Parse Ads Entity
   */
-  private parseAds(data: CSVRow, row_id: number): Ads {
+  private parseAds(data: CSVRow, row: number): Ads {
     const currentStoreState = store.getState();
     const errorArray = [];
     const providedId = data["Ad ID"];
@@ -179,7 +180,7 @@ export class EntityMapper {
     if (campaignIdErrorMessage) {
       errorArray.push(campaignIdErrorMessage);
     } else {
-      let adGroupEntityOnRow = currentStoreState.entities.find(entity => entity.row === row_id && entity.type === 'ad_group');
+      let adGroupEntityOnRow = currentStoreState.entities.find(entity => entity.row === row && entity.type === 'ad_group');
       if (adGroupEntityOnRow) {
         adGroupRowId = adGroupEntityOnRow.id;
       } else {
@@ -191,7 +192,7 @@ export class EntityMapper {
       id: getNumberOrDefaultString(providedId),
       ad_group_id: adGroupRowId || getNumberOrDefaultString(data["Ad Ad Group ID"]),
       type: 'ad',
-      row: row_id,
+      row: row,
       title: data["Ad Title"],
       post_id: data["Post ID"],
       result: errorArray.length ? arrayToSentece(errorArray) : 'Success',
@@ -208,5 +209,47 @@ export class EntityMapper {
     this.csvRows.forEach((row, index) => this.parseCampaign(row, index));
     this.csvRows.forEach((row, index) => this.parseAdGroups(row, index));
     this.csvRows.forEach((row, index) => this.parseAds(row, index));
+  }
+
+  /** 
+   * Generate results
+  */
+  public generateResult(): any[] {
+    // get all entities and group them by thier row
+    const currentStoreState = store.getState().entities;
+    const groupedRows = _.groupBy(currentStoreState, 'row');
+
+    // return data into object that can be parsed back into CSV
+    return Object.values<Partial<Entity>[]>(groupedRows).map((row) => {
+      const campaign = row.find(column => column.type === 'campaign');
+      const adGroup = row.find(column => column.type === 'ad_group');
+      const ad = row.find(column => column.type === 'ad');
+
+      // do not repeat results from different columns
+      const rowResult = _.uniq(row.map(column => column?.result || ""));
+      let finalRowResult = [...rowResult];
+      // if compiled result includes an error message, print only that error message
+      if (rowResult.length !== 1) {
+        finalRowResult = rowResult.filter((text: string) => text !== 'Success')
+      }
+
+
+      return ({
+        "Campaign ID": campaign?.id || "",
+        "Campaign Title": campaign?.title || "",
+        "Campaign Objective": campaign?.objective || "",
+        "Ad Group ID": adGroup?.id || "",
+        "Ad Group Campaign ID": adGroup?.campaign_id || "",
+        "Ad Group Title": adGroup?.title || "",
+        "Geo Locations": arrayToSentece(adGroup?.geolocations || []),
+        "Start Date": adGroup?.start_date || "",
+        "End Date": adGroup?.end_date || "",
+        "Ad ID": ad?.id || "",
+        "Ad Title": ad?.title || "",
+        "Ad Ad Group ID": ad?.ad_group_id || "",
+        "Post ID": ad?.post_id || "",
+        "Results": arrayToSentece(finalRowResult)
+      })
+    });
   }
 }
