@@ -8,7 +8,7 @@ export default function Uploader() {
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [parseLoading, setParseLoading] = useState(false);
 
-  const onFileUpload: ChangeEventHandler<HTMLInputElement> = (e) => {
+  const onFileUpload: ChangeEventHandler<HTMLInputElement> = async (e) => {
     try {
       if (e.target.files?.length) {
         const csvFile = e.target.files[0];
@@ -21,7 +21,16 @@ export default function Uploader() {
         const entityMapper = new EntityMapper(csvFile);
         setParseLoading(true);
         // read CSV file
-        entityMapper.readCSVFiles();
+        await entityMapper.readCSVFiles();
+        // validate CSV files
+        const validationResult = entityMapper.validateColumnFields();
+        if (!validationResult.status) {
+          toast.error(validationResult.message);
+          // reset form input
+          e.target.value = "";
+          setUploadedFileName(null);
+          return;
+        }
       }
     } catch {
       toast.error("Problem parsing CSV");
@@ -45,7 +54,7 @@ export default function Uploader() {
               Click to {uploadedFileName ? "add another file" : "upload"}
             </p>
             {uploadedFileName && (
-              <p className="text-sm opacity-50 w-[80] truncate text-center">
+              <p className="text-sm opacity-50 w-[80%] truncate text-center">
                 uploaded file{" "}
                 <span className="text-brand-100">{uploadedFileName}</span>
               </p>
